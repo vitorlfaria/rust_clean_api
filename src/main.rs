@@ -2,7 +2,7 @@ use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
 };
-use axum_api::route::create_router;
+use axum_api::api::router::create_router;
 use tower_http::cors::CorsLayer;
 
 #[tokio::main]
