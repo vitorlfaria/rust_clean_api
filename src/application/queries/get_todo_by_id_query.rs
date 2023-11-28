@@ -6,9 +6,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-use crate::{
-    response::{SingleTodoResponse, TodoData}, infrastructure::data::db_context::in_memory_db::InMemoryDB,
-};
+use crate::{infrastructure::data::db_context::in_memory_db::InMemoryDB, application::responses::{SingleTodoResponse, TodoData}};
 
 pub async fn get_todo_by_id_query(
     Path(id): Path<Uuid>,

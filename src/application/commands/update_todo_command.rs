@@ -2,7 +2,7 @@ use axum::{extract::{Path, State}, Json, response::IntoResponse, http::StatusCod
 use chrono::Duration;
 use uuid::Uuid;
 
-use crate::{infrastructure::data::db_context::in_memory_db::InMemoryDB, domain::entities::todo::Todo, response::{SingleTodoResponse, TodoData}};
+use crate::{infrastructure::data::db_context::in_memory_db::InMemoryDB, domain::entities::todo::Todo, application::responses::{SingleTodoResponse, TodoData}};
 
 use super::update_todo_request::UpdateTodoRequest;
 
