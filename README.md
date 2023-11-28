@@ -123,6 +123,7 @@ If you to want the feature to run in watch mode, install `cargo-watch`
 
 - [x] Working api structure
 - [x] Clean Architecure
+- [ ] Repository
 - [ ] Authentication
     - [ ] Create user
     - [ ] Authenticate with JWT
