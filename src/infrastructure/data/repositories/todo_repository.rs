@@ -1,13 +1,20 @@
-use surrealdb::{Error, engine::remote::ws::Ws, opt::auth::Root};
 use crate::{domain::entities::todo::Todo, infrastructure::data::db_context::surreal_context::DB};
+use surrealdb::{error::Db::Thrown, Error};
 
 pub struct TodoRepository {
-    table: String
+    table: String,
 }
 
 impl TodoRepository {
     pub fn new() -> Self {
-        TodoRepository { table: "todo".to_string() }
+        TodoRepository {
+            table: "todo".to_string(),
+        }
+    }
+
+    pub async fn get_by_query(&self, query: String) -> Result<Vec<Todo>, Error> {
+        let result = DB.query(query).await?.take(0)?;
+        Ok(result)
     }
 
     pub async fn get_all(&self) -> Result<Vec<Todo>, Error> {
@@ -15,16 +22,27 @@ impl TodoRepository {
         Ok(records)
     }
 
-    pub async fn get_by_id(&self, id: &str) -> Result<Todo, Error> {
-        let _ = DB.connect::<Ws>("localhost:8000").await;
-        let _ = DB.signin(Root {
-            username: "root",
-            password: "root",
-        })
-        .await;
-        let _ = DB.use_ns("todo").use_db("todo").await;
-        let record = DB.select((&self.table, id)).await?.unwrap();
-        Ok(record)
+    pub async fn get_by_title(&self, title: String) -> Result<Todo, Error> {
+        if let Some(record) = DB
+            .query("SELECT * FROM todo WHERE title = $title")
+            .bind(("title", title))
+            .await?
+            .take(0)?
+        {
+            return Ok(record);
+        }
+
+        let error = Error::Db(Thrown("Record not found".to_string()));
+        Err(error)
+    }
+
+    pub async fn get_by_id(&self, id: String) -> Result<Todo, Error> {
+        if let Some(record) = DB.select((&self.table, id)).await? {
+            return Ok(record);
+        }
+
+        let error = Error::Db(Thrown("Record not found".to_string()));
+        Err(error)
     }
 
     pub async fn create(&self, content: Todo) -> Result<Vec<Todo>, Error> {
@@ -32,8 +50,12 @@ impl TodoRepository {
         Ok(record)
     }
 
-    pub async fn update(&self, id: &str, content: Todo) -> Result<Todo, Error> {
-        let record = DB.update((&self.table, id)).content(content).await?.unwrap();
+    pub async fn update(&self, id: String, content: Todo) -> Result<Todo, Error> {
+        let record = DB
+            .update((&self.table, id))
+            .content(content)
+            .await?
+            .unwrap();
         Ok(record)
     }
 

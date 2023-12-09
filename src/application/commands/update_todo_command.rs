@@ -1,56 +1,63 @@
-use axum::{extract::{Path, State}, Json, response::IntoResponse, http::StatusCode};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse, Json};
 use chrono::Duration;
-use uuid::Uuid;
 
-use crate::{infrastructure::data::db_context::in_memory_db::InMemoryDB, domain::entities::todo::Todo, application::responses::{SingleTodoResponse, TodoData}};
+use crate::{
+    application::responses::{SingleTodoResponse, TodoData},
+    domain::entities::todo::Todo,
+    infrastructure::data::repositories::todo_repository::TodoRepository,
+};
 
 use super::update_todo_request::UpdateTodoRequest;
 
-
 pub async fn update_todo_command(
-    Path(id): Path<Uuid>,
-    State(db): State<InMemoryDB>,
+    Path(id): Path<String>,
     Json(body): Json<UpdateTodoRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let id = id.to_string();
-    let mut vec = db.lock().await;
+    let repository = TodoRepository::new();
 
-    if let Some(todo) = vec.iter_mut().find(|todo| todo.id == Some(id.clone())) {
-        let datetime = chrono::Utc::now()
-            .checked_sub_signed(Duration::hours(3))
-            .unwrap();
-        let title = body.title.to_owned();
-        let content = body.content.to_owned();
-        let completed = body.completed.unwrap_or(todo.completed.unwrap());
-        let payload = Todo {
-            id: todo.id.to_owned(),
-            title: if !title.is_empty() {
-                title
-            } else {
-                todo.title.to_owned()
-            },
-            content: if !content.is_empty() {
-                content
-            } else {
-                todo.content.to_owned()
-            },
-            completed: Some(completed),
-            createdAt: todo.createdAt,
-            updatedAt: Some(datetime),
-        };
-        *todo = payload;
+    match repository.get_by_id(id.clone()).await {
+        Ok(todo) => {
+            let datetime = chrono::Utc::now()
+                .checked_sub_signed(Duration::hours(3))
+                .unwrap();
+            let title = body.title.to_owned();
+            let content = body.content.to_owned();
+            let completed = body.completed.unwrap_or(todo.completed.unwrap());
+            let payload = Todo {
+                id: todo.id.to_owned(),
+                title: if !title.is_empty() {
+                    title
+                } else {
+                    todo.title.to_owned()
+                },
+                content: if !content.is_empty() {
+                    content
+                } else {
+                    todo.content.to_owned()
+                },
+                completed: Some(completed),
+                createdAt: todo.createdAt,
+                updatedAt: Some(datetime),
+            };
 
-        let json_response = SingleTodoResponse {
-            status: "success".to_string(),
-            data: TodoData { todo: todo.clone() },
-        };
-        Ok((StatusCode::OK, Json(json_response)))
-    } else {
-        let error_response = serde_json::json!({
-            "status": "fail",
-            "message": format!("Todo with ID: {} not found", id)
-        });
+            let todo_response = repository.update(id, payload).await.unwrap();
 
-        Err((StatusCode::NOT_FOUND, Json(error_response)))
+            let json_response = SingleTodoResponse {
+                status: "success".to_string(),
+                data: TodoData {
+                    todo: todo_response,
+                },
+            };
+
+            Ok((StatusCode::OK, Json(json_response)))
+        }
+        Err(_) => {
+            let error_response = serde_json::json!({
+                "status": "fail",
+                "message": format!("Todo with ID: {} not found", id)
+            });
+
+            Err((StatusCode::NOT_FOUND, Json(error_response)))
+        }
     }
 }

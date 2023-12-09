@@ -11,7 +11,7 @@ pub async fn delete_todo_command(
     let id = id.to_string();
     let mut vec = db.lock().await;
 
-    if let Some(pos) = vec.iter().position(|todo| todo.id == Some(id.clone())) {
+    if let Some(pos) = vec.iter().position(|todo| todo.title == id.clone()) {
         vec.remove(pos);
         return Ok((StatusCode::NO_CONTENT, Json("")));
     }

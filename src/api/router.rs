@@ -18,7 +18,7 @@ pub fn create_router() -> Router {
         .route(
             "/api/todos/:id",
             get(get_todo_by_id_query)
-                .patch(update_todo_command)
+                .put(update_todo_command)
                 .delete(delete_todo_command),
         )
         .with_state(IDatabase::connect())

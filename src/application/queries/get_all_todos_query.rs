@@ -1,25 +1,17 @@
-use axum::{
-    extract::{Query, State},
-    response::IntoResponse,
-    Json,
-};
+use axum::{response::IntoResponse, Json};
 
 use crate::{
-    domain::entities::todo::Todo, infrastructure::data::db_context::in_memory_db::InMemoryDB, application::{queries::query_options::QueryOptions, responses::TodoListResponse},
+    application::responses::TodoListResponse, domain::entities::todo::Todo,
+    infrastructure::data::repositories::todo_repository::TodoRepository,
 };
 
-pub async fn get_all_todos_query(
-    opts: Option<Query<QueryOptions>>,
-    State(db): State<InMemoryDB>,
-) -> impl IntoResponse {
-    let todos = db.lock().await;
+pub async fn get_all_todos_query() -> impl IntoResponse {
+    let repository = TodoRepository::new();
 
-    let Query(opts) = opts.unwrap_or_default();
-
-    let limit = opts.limit.unwrap_or(10);
-    let offset = (opts.page.unwrap_or(1) - 1) * limit;
-
-    let todos: Vec<Todo> = todos.clone().into_iter().skip(offset).take(limit).collect();
+    let mut todos: Vec<Todo> = Vec::new();
+    if let Ok(result) = repository.get_all().await {
+        todos = result;
+    }
 
     let json_response = TodoListResponse {
         status: "success".to_string(),
