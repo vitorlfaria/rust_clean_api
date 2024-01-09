@@ -1,4 +1,4 @@
-use crate::{domain::entities::todo::Todo, infrastructure::data::db_context::surreal_context::DB};
+use crate::{domain::models::todo::Todo, infrastructure::data::db_context::surreal_context::DB};
 use surrealdb::{error::Db::Thrown, Error};
 
 pub struct TodoRepository {
@@ -8,13 +8,8 @@ pub struct TodoRepository {
 impl TodoRepository {
     pub fn new() -> Self {
         TodoRepository {
-            table: "todo".to_string(),
+            table: String::from("todo"),
         }
-    }
-
-    pub async fn get_by_query(&self, query: String) -> Result<Vec<Todo>, Error> {
-        let result = DB.query(query).await?.take(0)?;
-        Ok(result)
     }
 
     pub async fn get_all(&self) -> Result<Vec<Todo>, Error> {
@@ -22,35 +17,39 @@ impl TodoRepository {
         Ok(records)
     }
 
+    pub async fn get_by_id(&self, id: String) -> Result<Todo, Error> {
+        if let Some(record) = DB.select((&self.table, id.clone())).await? {
+            return Ok(record);
+        }
+
+        let error = Error::Db(
+            Thrown(
+                format!("Todo with id {} not found", id)
+            )
+        );
+        Err(error)
+    }
+    
     pub async fn get_by_title(&self, title: String) -> Result<Todo, Error> {
         if let Some(record) = DB
             .query("SELECT * FROM todo WHERE title = $title")
-            .bind(("title", title))
+            .bind(("title", title.clone()))
             .await?
             .take(0)?
         {
             return Ok(record);
         }
 
-        let error = Error::Db(Thrown("Record not found".to_string()));
+        let error = Error::Db(Thrown(format!("Todo with title {} not found", title)));
         Err(error)
     }
 
-    pub async fn get_by_id(&self, id: String) -> Result<Todo, Error> {
-        if let Some(record) = DB.select((&self.table, id)).await? {
-            return Ok(record);
-        }
-
-        let error = Error::Db(Thrown("Record not found".to_string()));
-        Err(error)
-    }
-
-    pub async fn create(&self, content: Todo) -> Result<Vec<Todo>, Error> {
+    pub async fn create_todo(&self, content: Todo) -> Result<Vec<Todo>, Error> {
         let record = DB.create(&self.table).content(content).await?;
         Ok(record)
     }
 
-    pub async fn update(&self, id: String, content: Todo) -> Result<Todo, Error> {
+    pub async fn update_todo(&self, id: String, content: Todo) -> Result<Todo, Error> {
         let record = DB
             .update((&self.table, id))
             .content(content)
@@ -59,7 +58,7 @@ impl TodoRepository {
         Ok(record)
     }
 
-    pub async fn delete(&self, id: &str) -> Result<Todo, Error> {
+    pub async fn delete_todo(&self, id: String) -> Result<Todo, Error> {
         let result = DB.delete((&self.table, id)).await?.unwrap();
         Ok(result)
     }

@@ -1,13 +1,12 @@
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Json};
-use chrono::Duration;
+use chrono::Local;
 
 use crate::{
-    application::responses::{SingleTodoResponse, TodoData},
-    domain::entities::todo::Todo,
-    infrastructure::data::repositories::todo_repository::TodoRepository,
+    infrastructure::data::repositories::todo_repository::TodoRepository, domain::models::todo::Todo,
 };
 
-use super::update_todo_request::UpdateTodoRequest;
+use super::requests::update_todo_request::UpdateTodoRequest;
+
 
 pub async fn update_todo_command(
     Path(id): Path<String>,
@@ -17,9 +16,7 @@ pub async fn update_todo_command(
 
     match repository.get_by_id(id.clone()).await {
         Ok(todo) => {
-            let datetime = chrono::Utc::now()
-                .checked_sub_signed(Duration::hours(3))
-                .unwrap();
+            let datetime = Local::now();
             let title = body.title.to_owned();
             let content = body.content.to_owned();
             let completed = body.completed.unwrap_or(todo.completed.unwrap());
@@ -40,20 +37,18 @@ pub async fn update_todo_command(
                 updatedAt: Some(datetime),
             };
 
-            let todo_response = repository.update(id, payload).await.unwrap();
+            let todo_response = repository.update_todo(id, payload).await.unwrap();
 
-            let json_response = SingleTodoResponse {
-                status: "success".to_string(),
-                data: TodoData {
-                    todo: todo_response,
-                },
-            };
+            let json_response = serde_json::json!({
+                "status": "success",
+                "data": todo_response,
+            });
 
             Ok((StatusCode::OK, Json(json_response)))
         }
         Err(_) => {
             let error_response = serde_json::json!({
-                "status": "fail",
+                "status": "error",
                 "message": format!("Todo with ID: {} not found", id)
             });
 

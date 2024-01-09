@@ -1,8 +1,7 @@
 use axum::{response::IntoResponse, Json};
 
 use crate::{
-    application::responses::TodoListResponse, domain::entities::todo::Todo,
-    infrastructure::data::repositories::todo_repository::TodoRepository,
+    infrastructure::data::repositories::todo_repository::TodoRepository, domain::models::todo::Todo,
 };
 
 pub async fn get_all_todos_query() -> impl IntoResponse {
@@ -13,11 +12,11 @@ pub async fn get_all_todos_query() -> impl IntoResponse {
         todos = result;
     }
 
-    let json_response = TodoListResponse {
-        status: "success".to_string(),
-        results: todos.len(),
-        todos,
-    };
+    let json_response = serde_json::json!({
+        "status": "success".to_string(),
+        "results": todos.len(),
+        "todos": todos,
+    });
 
     Json(json_response)
 }

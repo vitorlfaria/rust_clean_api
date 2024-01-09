@@ -1,23 +1,21 @@
-use axum::{extract::{Path, State}, response::IntoResponse, http::StatusCode, Json};
-use uuid::Uuid;
+use axum::{extract::Path, response::IntoResponse, http::StatusCode, Json};
 
-use crate::infrastructure::data::db_context::in_memory_db::InMemoryDB;
-
+use crate::infrastructure::data::repositories::todo_repository::TodoRepository;
 
 pub async fn delete_todo_command(
-    Path(id): Path<Uuid>,
-    State(db): State<InMemoryDB>,
+    Path(id): Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let repository = TodoRepository::new();
     let id = id.to_string();
-    let mut vec = db.lock().await;
 
-    if let Some(pos) = vec.iter().position(|todo| todo.title == id.clone()) {
-        vec.remove(pos);
-        return Ok((StatusCode::NO_CONTENT, Json("")));
+    if let Ok(_) = repository.get_by_id(id.clone()).await {
+        let _ = repository.delete_todo(id.clone()).await.unwrap();
+
+        return Ok(StatusCode::NO_CONTENT);
     }
 
     let error_response = serde_json::json!({
-        "status": "fail",
+        "status": "error",
         "message": format!("Todo with ID: {} not found", id)
     });
 

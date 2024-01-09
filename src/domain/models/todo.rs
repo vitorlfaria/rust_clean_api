@@ -1,4 +1,4 @@
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::sql::Thing;
 
@@ -9,7 +9,6 @@ pub struct Todo {
     pub title: String,
     pub content: String,
     pub completed: Option<bool>,
-    pub createdAt: Option<DateTime<Utc>>,
-    pub updatedAt: Option<DateTime<Utc>>,
+    pub createdAt: Option<DateTime<Local>>,
+    pub updatedAt: Option<DateTime<Local>>,
 }
-

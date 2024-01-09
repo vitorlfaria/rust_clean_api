@@ -7,34 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'axum_api'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=axum_api"
-                ],
-                "filter": {
-                    "name": "axum_api",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'axum_api'",
+            "name": "Debug executable 'article_api'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=axum_api",
-                    "--package=axum_api"
+                    "--bin=article_api",
+                    "--package=article_api"
                 ],
                 "filter": {
-                    "name": "axum_api",
+                    "name": "article_api",
                     "kind": "bin"
                 }
             },
@@ -44,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'axum_api'",
+            "name": "Debug unit tests in executable 'article_api'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=axum_api",
-                    "--package=axum_api"
+                    "--bin=article_api",
+                    "--package=article_api"
                 ],
                 "filter": {
-                    "name": "axum_api",
+                    "name": "article_api",
                     "kind": "bin"
                 }
             },
